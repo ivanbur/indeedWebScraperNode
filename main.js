@@ -1,9 +1,14 @@
-var express = require('express');
-var fs      = require('fs');
-var request = require('request');
-var cheerio = require('cheerio');
-var os      = require('os');
-var jsonObj = require(os.homedir() + "/downloads/my-download.json");
+var express  = require('express');
+var fs       = require('fs');
+var request  = require('request');
+var cheerio  = require('cheerio');
+var os       = require('os');
+var jsonObj  = require(os.homedir() + "/downloads/my-download.json");
+var { Pool } = require('pg');
+var pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: true
+});
 
 var app = express();
 
@@ -116,6 +121,18 @@ app.get('', function(req, res) {
 
   })
 })
+
+app.get('/db', async (req, res) => {
+  try {
+    var client = await pool.connect();
+    var result = await client.query('SELECT * FROM test_table');
+    res.render('pages/db', result);
+    client.release();
+  } catch (err) {
+    console.log(err);
+    res.send("Error " + err);
+  }
+});
 
 // app.listen(8000);
 // console.log("Refresh localhost:8000");
